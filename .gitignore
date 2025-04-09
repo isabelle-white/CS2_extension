@@ -1,0 +1,15 @@
+
+# Ignore .nc files (anywhere in the project, including subdirectories)
+**/*.nc
+
+# Ignore system-specific files (e.g., MacOS)
+**/*.DS_Store
+
+#ignore tar files
+**/*.tar
+
+#ignore
+emuesat_all_datat
+mca_shared.zip
+results
+Data/  
