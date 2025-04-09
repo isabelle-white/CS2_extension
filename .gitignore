@@ -15,3 +15,5 @@ results
 Data/  
 **/*.zip
 /.idea
+**/*.csv
+**/*.elev
