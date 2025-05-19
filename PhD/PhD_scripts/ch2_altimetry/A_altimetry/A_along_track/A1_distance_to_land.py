@@ -75,12 +75,29 @@ plon, plat = ucoast_pts[:,0], ucoast_pts[:, 1]
 # - - - - - - - - - - - - - - - - - - - - - - - - 
 # read file but don't close the dataset yet
 
-for filepath in glob.iglob(ncdir+"20**.nc"):
-
+for filepath in glob.iglob(ncdir+"**MERGE.nc"):
+#for filepath in glob.iglob(ncdir+"month**.nc"):
+#for filepath in glob.glob(ncdir + '201102_MERGE.nc'):
     filename = os.path.basename(filepath)
     print(filename)
 
-    ds = Dataset(filepath, 'r+')
+    # if filename[:6] <= '202111':
+    #     print('pocessing', filename)
+    #     continue
+
+    try:
+        ds = Dataset(filepath, 'r+')
+    except (FileNotFoundError, OSError) as e:
+        print(f"Cannot open file {filepath}: {e}, skipping.")
+        continue
+    #print(f"Variables in {filename}: {list(ds.variables.keys())}")
+    ### ADDED: Check for required variables
+    if not all(var in ds.variables for var in ['Latitude', 'Longitude']):
+        print(f"Missing required variables in {filename}, skipping.")
+        ds.close()
+        continue
+
+    #ds = Dataset(filepath, 'r+')
     lat = ds['Latitude'][:]
     lon = ds['Longitude'][:]
     # - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -118,25 +135,48 @@ for filepath in glob.iglob(ncdir+"20**.nc"):
         for j, (lon_j, lat_j) in enumerate(zip(lon_box, lat_box)):
 
             # Calculate the distances between (lon_j, lat_j) and each (ulon, ulat) using geod.inv
-            distance = [geod.inv(lon_j, lat_j, ulon, ulat)[0]  # Only get the distance (first return value)
+            #distance = [geod.inv(lon_j, lat_j, ulon, ulat)[0] - this was oanas scipt
+            distance = [geod.inv(lon_j, lat_j, ulon, ulat)[2]  # Only get the distance (first return value)
                         for (ulon, ulat) in zip(plon_box, plat_box)]
 
             # Pick the minimum distance
             dist[idx_dist_i[j]] = min(distance)
 
+    # print('distance to coast',dist)
+    #
+    # plt.plot(dist)
+    # plt.title("Distance to coast vs. Index")
+    # plt.xlabel("Index")
+    # plt.ylabel("Distance (m)")
+    # plt.show()
+
     # Check if "distance_m" already exists in the dataset
-    if "distance_m" not in ds.variables:
+# COMMENYING THIS OUT TO CHECK DIST CREATION IN ONE MONTH.NC FILE
+    #if "distance_m" not in ds.variables:
+#         ds.createVariable("distance_m", "f4", ("nrows"))
+#         ds["distance_m"][:] = dist
+#         ds["distance_m"].units = 'metres'
+#         ds["distance_m"].long_name = 'distance on the WGS84 ellipsoid from the nearest coastline point'
+#     else:
+#         print(f"Variable 'distance_m' already exists in {filename}, skipping creation.")
+#
+#     # ds.createVariable("distance_m", "f4", ("nrows"))
+#     # ds["distance_m"][:] = dist
+#     # ds["distance_m"].units = 'metres'
+#     # ds["distance_m"].long_name = 'distance on the WGS84 ellipsoid from the nearest coastline point'
+#
+#     ds.close()
+#
+#
+
+    if "distance_m" in ds.variables:
+        print(f"Variable 'distance_m' already exists in {filename}, replacing data.")
+        ds["distance_m"][:] = dist
+    else:
         ds.createVariable("distance_m", "f4", ("nrows"))
         ds["distance_m"][:] = dist
         ds["distance_m"].units = 'metres'
         ds["distance_m"].long_name = 'distance on the WGS84 ellipsoid from the nearest coastline point'
-    else:
-        print(f"Variable 'distance_m' already exists in {filename}, skipping creation.")
-
-    # ds.createVariable("distance_m", "f4", ("nrows"))
-    # ds["distance_m"][:] = dist
-    # ds["distance_m"].units = 'metres'
-    # ds["distance_m"].long_name = 'distance on the WGS84 ellipsoid from the nearest coastline point'
 
     ds.close()
 

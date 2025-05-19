@@ -28,13 +28,14 @@ import shapefile
 
 import xarray as xr
 # --------------------------------------------------------
-workdir = '/Volumes/SamT5/PhD_data/'
-icedir = workdir + 'NSIDC/sic/'
+workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
+icedir = workdir + 'NSIDC/NSIDC/sic/'
 coastdir = workdir + 'land_masks/holland_vic/'
 maskdir = workdir + 'altimetry_cpom/CS2_mode_mask/'
 ncdir = workdir + 'altimetry_cpom/1_raw_nc/'
+figdir = workdir + '../PhD_figures/'
 
-localdir = '/Volumes/SamT5/PhD_scripts/'
+localdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
 auxscriptdir = localdir + 'aux_func/'
 sys.path.append(auxscriptdir)
 from aux_1_filenames import cs2_id_list
@@ -266,6 +267,6 @@ circle = m.drawmapboundary(linewidth=1, color='k')
 circle.set_clip_on(False)
 
 fig.tight_layout(rect=[0, 0, 1, 1])
-# savefig
-fig.savefig(figdir + savefigname, bbox_inches='tight',
-            dpi=fig.dpi)
+# savefig if wanted
+# fig.savefig(figdir + savefigname, bbox_inches='tight',
+#             dpi=fig.dpi)

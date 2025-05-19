@@ -16,7 +16,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 # directories
-maskdir = '/Volumes/SamT5/PhD_data/altimetry_cpom/CS2_mode_mask/'
+maskdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/altimetry_cpom/CS2_mode_mask/'
 
 # define map area
 m = Basemap(projection='spstere', 
@@ -121,6 +121,16 @@ circle = m.drawmapboundary(linewidth=1, color='k', ax=ax)
 circle.set_clip_on(False)
 
 ax.set_rasterization_zorder(0)
+
+### ---------------------------------------------------------- SAVE FIGURE
+
+# # Save the figure
+# figdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_figures/'
+# savefigname = 'mode_masks.png'
+# import os
+# os.makedirs(figdir, exist_ok=True)
+#
+# fig.savefig(os.path.join(figdir, savefigname), dpi=300, bbox_inches='tight')
 
 ### ----------------------------------------------------------
 

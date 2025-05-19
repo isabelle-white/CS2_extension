@@ -17,6 +17,7 @@ import matplotlib.dates as mdates
 import datetime
 
 import sys
+import os
 # --------------------------------------------------------
 # Directories
 workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
@@ -46,8 +47,22 @@ for i in range(itt):
 
     print("processing "+env_id_list[i])
 
-    ds = Dataset(filename, 'r+')
+    # ds = Dataset(filename, 'r+')
     #print(ds.variables.keys())
+
+    # Check if file exists first
+    if not os.path.isfile(filename):
+        print(f"File not found, skipping: {filename}")
+        skipped_files_env.append(filename)
+        continue
+
+    # Try opening the NetCDF file, skip if error occurs
+    try:
+        ds = Dataset(filename, 'r')  # Use 'r' unless you need to write
+    except OSError as e:
+        print(f"Could not open {filename}: {e}")
+        skipped_files_env.append(filename)
+        continue
 
     if 'SurfaceType' not in ds.variables:
         print(f"'SurfaceType' not found in {filename}. Skipping...")
@@ -116,9 +131,23 @@ for i in range(itt):
     print("Reading file %s" % filename)
     print("processing "+filename)
 
-    ds = Dataset(filename, 'r+')
+    # ds = Dataset(filename, 'r+')
     #print(ds.variables.keys())
     #print(ds.groups.keys())  # List all groups in the dataset
+
+    # Check if file exists first
+    if not os.path.isfile(filename):
+        print(f"File not found, skipping: {filename}")
+        skipped_files_cs2.append(filename)
+        continue
+
+    # Try opening the NetCDF file, skip if error occurs
+    try:
+        ds = Dataset(filename, 'r')  # Use 'r' unless you need to write
+    except OSError as e:
+        print(f"Could not open {filename}: {e}")
+        skipped_files_cs2.append(filename)
+        continue
 
     if 'SurfaceType' not in ds.variables:
         print(f"'SurfaceType' not found in {filename}. Skipping...")
@@ -156,7 +185,7 @@ for i in range(itt):
     surf = surf[dist>1e4]
     lat = lat[dist>1e4]
     retracker = retracker[dist>1e4]
-    
+
     num_cs2[i] = len(surf)
     # split into O-L
     # ------------------------------------
@@ -174,7 +203,7 @@ for i in range(itt):
 
     SARin_o_lat = o_lat[retracker==3]
     SARin_l_lat = l_lat[retracker==3]
-    
+
     no_lrm[i] = ma.count(LRM_o_lat)
     nl_lrm[i] = ma.count(LRM_l_lat)
     no_sar[i] = ma.count(SAR_o_lat)
@@ -251,13 +280,12 @@ print('dist', dist)
 
 
 fig, ax = plt.subplots(figsize=(10,3))
-ax.plot(date_cs2, cs2_fr_on_land*100, c='k', marker='o', 
+ax.plot(date_cs2, cs2_fr_on_land*100, c='k', marker='o',
         markersize=3, lw=1)
 ax.set_ylabel("%")
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 plt.tight_layout()
 plt.show()
-
 #ENV
 # uncomment 4 lines if this doesn't work after 19/5/25
 env_on_land = ntot_env - num_env
@@ -273,7 +301,7 @@ print('env_fr_on_land', env_fr_on_land)
 
 
 fig, ax = plt.subplots(figsize=(10,3))
-ax.plot(date_env, env_fr_on_land*100, c='k', marker='o', 
+ax.plot(date_env, env_fr_on_land*100, c='k', marker='o',
         markersize=3, lw=1)
 ax.set_ylabel("%")
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
@@ -296,7 +324,7 @@ env_fr_max = num_env/nmax
 #-------------------
 plt.ion()
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.bar(date_cs2, num_cs2, 
+ax.bar(date_cs2, num_cs2,
        width=20,
        facecolor='lightgrey',
        alpha=0.7)

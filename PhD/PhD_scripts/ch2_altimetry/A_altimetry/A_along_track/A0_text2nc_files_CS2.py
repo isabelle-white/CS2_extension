@@ -47,6 +47,7 @@ from netCDF4 import Dataset, num2date
 sys.path.append('/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/aux_func/')
 from aux_1_filenames import cs2_id_list as filenames
 
+
 import gsw
 
 import shapefile
@@ -77,6 +78,8 @@ for i in range(numfiles):
     filename = datadir + filenames[i] + '.elev'
     if (not os.path.isfile(filename)) or (not os.path.exists(filename)):
         print(filename, " - not found \n")
+        continue
+    print('Processing file ', filenames[i])
 print(numfiles, " files found. \n")
 
 print ("Preparing map area ... \n")
@@ -130,9 +133,15 @@ sarin_wap_poly = Polygon(sarin_wap_xy)
 for k in range(numfiles):
     print("parsing file "+filenames[k])
     filename = datadir + filenames[k] + '.elev'
-
-    cols=(0, 1, 4, 5 ,6, 7, 8, 11, 12, 13)
-    data = ma.masked_array(np.loadtxt(filename, usecols=cols))
+    try:
+        cols = (0, 1, 4, 5 ,6, 7, 8, 11, 12, 13)
+        data = ma.masked_array(np.loadtxt(filename, usecols=cols))
+    except Exception as e:
+        print(f"File {k} not found or could not be read: {filename}")
+        print(f"Error: {e}\nSkipping to next file...\n")
+        continue
+    # cols=(0, 1, 4, 5 ,6, 7, 8, 11, 12, 13)
+    # data = ma.masked_array(np.loadtxt(filename, usecols=cols))
     
     surf = data[:, 0]
     valid = data[:, 1]

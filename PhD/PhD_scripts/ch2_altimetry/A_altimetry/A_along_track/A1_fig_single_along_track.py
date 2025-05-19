@@ -34,9 +34,11 @@ coastdir = voldir + 'land_masks/holland_vic/'
 
 filepath = ncdir + 'month0508.nc'
 
-localdir = '/Users/ocd1n16/PhD_local/'
-scriptdir = localdir + 'scripts/'
-figdir = localdir + 'data_notes/Figures_v8seq/'
+# localdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_local/'
+localdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/'
+# scriptdir = localdir + 'scripts/'
+# figdir = scriptdir + 'data_notes/Figures_v8seq/'
+figdir = localdir + 'PhD_figures/Figures_v8seq/'
 
 # --------------------------------------------------------
 time_units = 'days since 1950-01-01 00:00:00.0'
@@ -137,12 +139,14 @@ m.scatter(track_lon[track_surf==2],
 		latlon=True, s=1,
 		c='royalblue')
 #  - - - SIC  - - - - 
+
 lp = m.contour(sic.lon.values, sic.lat.values,
 			sic.sic.values, levels=[.15],
 			colors='deeppink', linewidths=1.,
 			latlon=True, zorder=4)
 lp_label = '15% SIC'
 lp.collections[0].set_label(lp_label)
+
 ax.legend(loc='lower right',
         bbox_to_anchor=(.15, .85),
         fontsize=12)
@@ -181,6 +185,7 @@ circle.set_clip_on(False)
 
 fig.tight_layout(rect=[0, 0, 1, 1])
 # savefig
+print(figdir + savefigname)
 fig.savefig(figdir + savefigname, bbox_inches='tight',
             dpi=fig.dpi)
 

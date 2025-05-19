@@ -22,9 +22,10 @@ import sys, os, fnmatch
 
 # Define directories
 #-------------------------------------------------------------------------------
-voldir = '/Volumes/SamT5/PhD_data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 ncdir = voldir + 'altimetry_cpom/1_raw_nc/'
 lmdir = voldir + 'land_masks/'
+figdir = voldir + '../PhD_figures/'
 #------------------------------------------------------------------
 # FILES AND TIME AXES
 #------------------------------------------------------------------
@@ -41,6 +42,9 @@ lmdir = voldir + 'land_masks/'
 
 plot_annotation = '2008.09'
 filename = 'month0209.nc'
+
+savefigname = filename + '_A3_bin_numpts.png'
+print("plotting %s" % savefigname)
 
 with xr.open_dataset(ncdir + filename) as ds:
     print(ds.keys())
@@ -90,16 +94,22 @@ m = Basemap(projection='spstere',
     resolution='i',
     lon_0=180,
     round=True)
-cmap =cm.get_cmap("bone_r", 30)
+# cmap =cm.get_cmap("bone_r", 30)
+cmap = plt.colormaps["bone_r"].resampled(30)
+
 # - - - - - - - - - - - -
 
 fig, ax = plt.subplots(figsize=(5, 5))
 cs = m.pcolormesh(eglon, eglat, npts,
             vmin=0, vmax=400, latlon=True, cmap=cmap)
+ax.annotate(plot_annotation, xy=(0.4, 0.5),
+            xycoords='figure fraction',color = 'k', zorder = 10,
+            weight='bold')
 fig.colorbar(cs, ax=ax, extend='max', shrink=0.5, pad=0.1)
 m.drawcoastlines(color='purple')
-ax.annotate(plot_annotation, xy=(.4, .5),
-            xycoords='figure fraction',
-            weight='bold')
 plt.tight_layout()
+
+# savefig if wanted
+# fig.savefig(figdir + savefigname, bbox_inches='tight',
+#             dpi=fig.dpi*5)
 

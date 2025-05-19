@@ -25,13 +25,19 @@ import sys
 # don't display figures when running the script
 matplotlib.use('Agg')
 
-workdir = '/home/doc58/Documents/PhD_data/'
-ncdir = workdir + 'nc_data/'
+# workdir = '/home/doc58/Documents/PhD_data/'
+# ncdir = workdir + 'nc_data/'
+# coastdir = workdir + 'land_masks/holland_vic/'
+# figdir = workdir + '../PhD_figures/Figures_v4/'
+
+workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
+ncdir = workdir + 'altimetry_cpom/1_raw_nc/'
 coastdir = workdir + 'land_masks/holland_vic/'
 figdir = workdir + '../PhD_figures/Figures_v4/'
 
+
 # filenames
-filenamespath = '/Volumes/SamT5/PhD_scripts/'
+filenamespath = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/aux_func/'
 sys.path.append(filenamespath)
 from aux_1_filenames import env_id_list as id_list
 
@@ -92,5 +98,8 @@ for i in range(itt):
 
     # savefig
     if savefig:
+        print('saving fig to:', figdir+ savefigname)
         fig.savefig(figdir + savefigname, bbox_inches='tight',
                     dpi=fig.dpi*3)
+
+    plt.close(fig)
