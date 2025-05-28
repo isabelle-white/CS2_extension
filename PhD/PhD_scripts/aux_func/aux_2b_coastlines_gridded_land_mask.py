@@ -40,9 +40,10 @@ from copy import deepcopy
 import sys
 
 from netCDF4 import Dataset
+import pickle
 
 # Define directories
-workdir = '/Volumes/SamT5/PhD/data/'
+workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 lmdir = workdir +  'land_masks/'
 directorycoast = lmdir + 'holland_vic/'
 
@@ -144,15 +145,21 @@ from coastline_Antarctica import coastline
 [ilon_land, ilat_land, ilon_ice, ilat_ice] = coastline()
 
 # combine contours from both land and ice shelves
-ilon = np.hstack((ilon_land, ilon_ice, ilon_basemap))
-ilat = np.hstack((ilat_land, ilat_ice, ilat_basemap))
+# ilon = np.hstack((ilon_land, ilon_ice, ilon_basemap))
+# ilat = np.hstack((ilat_land, ilat_ice, ilat_basemap))
+
+ilon = ilon_land + ilon_ice + ilon_basemap
+ilat = ilat_land + ilat_ice + ilat_basemap
 
 #--------------------------------------------------------------
 # 1. file used to calculate distance to land 
 #--------------------------------------------------------------
-coast = np.vstack((ilon, ilat))
+# coast = np.vstack((ilon, ilat))
 
- with open(lmdir+'coastline_nested_lists.pkl', 'wb') as f:
+coast = (ilon, ilat)
+
+
+with open(lmdir+'coastline_nested_lists.pkl', 'wb') as f:
     pickle.dump(coast, f)
 #--------------------------------------------------------------
 #--------------------------------------------------------------
@@ -233,7 +240,7 @@ mgrid0[ilo-1, ila] = 1
 mgrid0[ilo, ila-1] = 1
 
 # save mask to a file /// commented this out so as not to replace the file I used
-#newfile = 'land_mask_gridded_50s_v2.nc' # edited the name just in case
+newfile = 'land_mask_gridded_50s_v2.nc' # edited the name just in case
 dataset = Dataset(lmdir+newfile, 'w')
 
 # dimensions
@@ -269,7 +276,7 @@ m = Basemap(projection='spstere',
             resolution='h',
             ellps='WGS84')
 
-basemap_coast = m.drawcoastlines(linewidth=0)
+basemap_coast = m.drawcoastlines(linewidth=0.25)
 segments = basemap_coast.get_segments()
 lat_seg, lon_seg = [], []
 
@@ -305,6 +312,7 @@ for k in range(len(lat_seg)):
 
 m.pcolormesh(glon, glat, mgrid0, alpha=0.6, cmap=cm.Blues, latlon=True, zorder=4)
 m.drawparallels([-50, -60])
-#m.scatter(glon, glat, c='grey', s=5, latlon=True, zorder=4)
-#m.scatter(gmlon, gmlat, c='c', s=5, latlon=True, zorder=4)
+# m.scatter(glon, glat, c='grey', s=5, latlon=True, zorder=4)
+# m.scatter(gmlon, gmlat, c='c', s=5, latlon=True, zorder=4)
 
+plt.show()

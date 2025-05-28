@@ -16,31 +16,34 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
 from shapely.geometry.polygon import Polygon
-from shapely.geometry import Point 
+from shapely.geometry import Point
 
 import sys
 
 #-------------------------------------------------------------------
 # Directories
 #-------------------------------------------------------------------
-voldir = '/Users/ocd1n16/PhD_local/data/'
-griddir = voldir + 'altimetry_cpom/3_grid_dot/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
+griddir = voldir + '/altimetry_cpom/3_grid_dot/'
 eradir = voldir + 'reanalyses/'
 topodir = voldir + 'topog/'
 
-scriptdir = '/Users/ocd1n16/PhD_git/'
+
+
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts'
 auxscriptdir = scriptdir + 'aux_func/'
 sys.path.append(auxscriptdir)
 import aux_stereoplot as st
 
 #-------------------------------------------------------------------
-# altimetry file 
+# altimetry file
 #-------------------------------------------------------------------
 geoidtype = 'goco05c'#'eigen6s4v2' # 'goco05c', 'egm08'
 satellite = 'all'
-sigma = 3
-
-altfile = 'dot_' + satellite + '_30bmedian_' + geoidtype + '_sig' + str(sigma) + '.nc'
+#sigma = '3'
+#altfile = 'dot_' + satellite + '_30bmedian_' + geoidtype + '_sig' + str(sigma) + '.nc'
+sigma = '3_1'
+altfile = 'dot_' + satellite + '_30bmedian_' + geoidtype + '_sig' + sigma + '.nc'
 
 #-------------------------------------------------------------------
 # load altimetry file
@@ -63,7 +66,8 @@ tglat, tglon = np.meshgrid(topo.lat, topo.lon)
 cbar_range = [0, .1]
 cmap = cm.get_cmap('bone_r', 11)
 cbar_units = ''
-cbar_extend = 'neither'
+# cbar_extend = 'neither' - this was oana's
+cbar_extend ='m'
 
 # intialize and array
 shelf = ma.zeros(alt_glat.shape)
@@ -81,8 +85,10 @@ shelf = ma.zeros(alt_glat.shape)
 #             print(f"({x:.2f}, {y:.2f})")
 
 plt.ion()
+print('figure 1')
 fig, ax, m = st.spstere_plot(alt_eglon, alt_eglat, shelf,
                        cbar_range, cmap, cbar_units, cbar_extend)
+
 #bathymetry contours
 lp = m.contour(tglon, tglat, topo.elevation,
           levels=[-2000],
@@ -104,7 +110,7 @@ for i in range(len(lpsegs)):
     if mm < len(a):
         mm = len(a)
         idx = i
-#extract that contour (first one for 2000m)        
+#extract that contour (first one for 2000m)
 cc = lpsegs[idx]
 #convert into geophys coords and crop the Ant Peninsula
 llon, llat = m(cc[:, 0], cc[:,1], inverse=True)
@@ -114,13 +120,18 @@ llon, llat = m(cc[:, 0], cc[:,1], inverse=True)
 #llat[(llon>-61)&(llon<-20)] = -74
 
 #------------------------------------------------
-m.plot(llon, llat, c='c',latlon=True, lw=1)
+m.plot(llon, llat, color='c',latlon=True, lw=1)
 #figname = 'shelf_contour_3000m.png'
 #fig2.savefig(figdir+figname, dpi=fig2.dpi*2)
 
 from scipy import stats
 
-a = stats.binned_statistic_2d(llon, llat, None, bins=[alt_eglat, alt_eglon])
+#a = stats.binned_statistic_2d(llon, llat, None, bins=[alt_eglat, alt_eglon]) - oana original script
+
+
+lon_bins = alt.edge_lon.values  # 1D array of edges along longitude
+lat_bins = alt.edge_lat.values  # 1D array of edges along latitude
+a = stats.binned_statistic_2d(llon, llat, None, statistic ='count' , bins=[lon_bins, lat_bins])
 
 
 # grid llon and llat onto the altimetry
@@ -151,7 +162,7 @@ for i in range(r):
 #shelf[alt.land_mask==1]=0
 #shelf = ma.masked_equal(shelf, 1)
 
-# values inside the contour but outside the land mask are 1; 
+# values inside the contour but outside the land mask are 1;
 # everything else is 0
 #------------------------------------------------
 alt_glon[shelf!=1] = np.nan
@@ -160,11 +171,12 @@ alt_glat[shelf!=1] = np.nan
 contour_lat = np.nanmax(alt_glat, axis=1)
 contour_lon = alt.longitude.values
 #------------------------------------------------
+print("figure 2")
 plt.ion()
 fig, ax, m = st.spstere_plot(alt_eglon, alt_eglat, shelf,
                        cbar_range, cmap, cbar_units, cbar_extend)
 #bathymetry contours
-lp = m.plot(llon, llat, c= 'm',
+lp = m.plot(llon, llat, color= 'm',
          latlon=True, zorder=2, label='2000m')
 ax.legend(loc=2, fontsize=9)
 
@@ -178,8 +190,8 @@ ds = xr.Dataset({'bathy_mask' : (('lon', 'lat'), shelf),
                 'lat' : alt.latitude.values,
                 'c' : np.arange(len(llon))})
 ds.bathy_mask.attrs["comments"] = "1=ocean region inside a 2000m bathymetry contour (GEBCO), 0=discard/mask"
-ds.clon.attrs["long_name"] = "lon of the bathy contour"
-ds.clat.attrs["long_name"] = "lat of the bathy contour"
+ds.llon.attrs["long_name"] = "lon of the bathy contour"
+ds.llat.attrs["long_name"] = "lat of the bathy contour"
 
 ds.to_netcdf(topodir + 'bathy_mask_2km.nc')
 

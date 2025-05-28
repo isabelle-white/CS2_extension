@@ -19,15 +19,18 @@ plt.rc('ytick', labelsize='medium')
 #-----------------------------------------------------------------------------
 # Define directories
 # where data files ared
-voldir = '/Volumes/SamT5/PhD/PhD_data/'
-lmdir = voldir + 'land_masks/'
-coastdir = voldir + 'land_masks/holland_vic/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
+griddir = voldir + '../altimetry_cpom/3_grid_dot/'
+eradir = voldir + 'reanalyses/'
 topodir = voldir + 'topog/'
 
 with xr.open_dataset(topodir + 'bathy_mask_2km.nc') as contour:
     print(contour.keys())
 cglat, cglon = np.meshgrid(contour.lat, contour.lon)
 shelf_mask = contour.bathy_mask.values
+
+
+
 
 
 # 2. MAP area and GRID
@@ -60,6 +63,7 @@ for j in range(len(segments)):
 # coastlines south of 60S
 print("Importing Antarctic Digital Database shapefile. \n")
 # add path to coastline files
+coastdir = "/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/land_masks/holland_vic/"
 sys.path.append(coastdir)
 from coastline_Antarctica import coastline
 
@@ -102,7 +106,7 @@ def spstere_plot(varlon, varlat, var, vlims, cmap, cbar_units, bcolor):
     for k in range(len(lat_seg)):
         m.plot(lon_seg[k], lat_seg[k], 
                lw=0.5, latlon=True, 
-               zorder=3, c='dimgrey')
+               zorder=3, color='dimgrey')
 
     m.plot(contour.llon, contour.llat,
             latlon=True, 
@@ -163,7 +167,7 @@ def spstere_plot_old(varlon, varlat, var, vlims, cmap, cbar_units, cbar_extend):
     for k in range(len(lat_seg)):
         m.plot(lon_seg[k], lat_seg[k], 
                lw=0.5, latlon=True, 
-               zorder=2, c='dimgrey')
+               zorder=2, color='dimgrey')
     # parallels and meridians
     m.drawparallels(np.arange(-80., -50., 10), 
                     zorder=10, linewdith=0.25, ax=ax)
@@ -231,7 +235,7 @@ def spstere_contourf(varlon, varlat, var, contourf_kw, cmap, cbar_units):
     for k in range(len(lat_seg)):
         m.plot(lon_seg[k], lat_seg[k], 
                lw=0.5, latlon=True, 
-               zorder=2, c='dimgrey')
+               zorder=2, color='dimgrey')
     # parallels and meridians
     m.drawparallels(np.arange(-80., -50., 10), 
                     zorder=10, linewdith=0.25, ax=ax)
@@ -302,7 +306,7 @@ def spstere_plot_nofig(fig, ax, varlon, varlat, var, vlims, cmap, cbar_units):
     for k in range(len(lat_seg)):
         m.plot(lon_seg[k], lat_seg[k], 
                lw=0.5, latlon=True, 
-               zorder=2, c='dimgrey')
+               zorder=2, color='dimgrey')
     """ 
     # parallels and meridians
     m.drawparallels(np.arange(-80., -50., 10), 
@@ -356,7 +360,7 @@ def spstere_frame():
     for k in range(len(lat_seg)):
         m.plot(lon_seg[k], lat_seg[k], 
                lw=0.5, latlon=True, 
-               zorder=2, c='dimgrey')
+               zorder=2, color='dimgrey')
     # parallels and meridians
     m.drawparallels(np.arange(-80., -50., 10), 
                     zorder=1, linewdith=0.25, ax=ax)

@@ -20,7 +20,7 @@ import sys
 
 # Define directories
 #------------------------------------------------------------------
-workdir = '/Volumes/SamT5/PhD/data/'
+workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 directorycoast = workdir + 'land_masks/holland_vic/'
 
 # COASTLINES
@@ -54,16 +54,19 @@ print("Importing Antarctic Digital Database shapefile.. \n")
 sys.path.append(directorycoast)
 from coastline_Antarctica import coastline
 
+
 # extract coastline points from files (Tiago/Paul Holland)
 ## it returns a list of lists
 [ilon_land, ilat_land, ilon_ice, ilat_ice] = coastline()
 
 # combine both
-ilon = np.hstack((ilon_land, ilon_ice))
-ilat = np.hstack((ilat_land, ilat_ice))
+# ilon = np.hstack((ilon_land, ilon_ice))
+# ilat = np.hstack((ilat_land, ilat_ice))
+# ilon = np.hstack([np.array(seg) for seg in ilon_land + ilon_ice])
+# ilat = np.hstack([np.array(seg) for seg in ilat_land + ilat_ice])
 
 
-plt.ion()
+# plt.ion()
 fig, ax = plt.subplots()
 
 # map boundary
@@ -71,9 +74,14 @@ circle = m.drawmapboundary(color='k', linewidth=1)
 circle.set_clip_on(False)
 
 # ---- cropped Basemap region ----
-for k in range(len(lat_seg)):
-    xf, yf = m(lon_seg[k], lat_seg[k])
-    m.plot(xf, yf, zorder=1, c='k', linewidth=0.25)
+# for k in range(len(lat_seg)):
+#     xf, yf = m(lon_seg[k], lat_seg[k])
+#     m.plot(xf, yf, zorder=1, c='k', linewidth=0.25)
+
+# ---- Basemap background with filled continents ----
+m.drawcoastlines(linewidth=0.25)
+m.fillcontinents(color='lightgrey', lake_color='white')  # Adds main landmass cleanly
+
 
 for k in range(len(ilon_land)):
     xf, yf = m(ilon_land[k], ilat_land[k])
@@ -86,3 +94,4 @@ for k in range(len(ilon_ice)):
     xyf = np.c_[xf, yf]
     poly = polyg(xyf, facecolor='pink', edgecolor='k')
     plt.gca().add_patch(poly)
+plt.show()
