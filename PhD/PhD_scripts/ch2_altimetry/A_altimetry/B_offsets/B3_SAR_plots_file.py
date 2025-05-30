@@ -17,12 +17,12 @@ import sys
 
 #-------------------------------------------------------------------
 # Define directories
-#-------------------------------------------------------------------
-voldir = '/Volumes/SamT5/PhD/PhD_data/'
+#-------------------------------------------------------------------------------
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 ncdir = voldir + 'altimetry_cpom/1_raw_nc/'
 bindir = voldir + 'altimetry_cpom/2_grid_offset/'
 
-scriptdir = '/Volumes/SamT5/PhD/PhD_scripts/ch2_altimetry/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
 auxscriptdir = scriptdir + 'aux_func/'
 
 sys.path.append(auxscriptdir)
@@ -138,3 +138,4 @@ ax.set_ylabel("SAR/SARin offset CS2 (cm)")
 ax.axhline(0, ls=':', c='k')
 ax.legend()
 plt.tight_layout()
+plt.show()

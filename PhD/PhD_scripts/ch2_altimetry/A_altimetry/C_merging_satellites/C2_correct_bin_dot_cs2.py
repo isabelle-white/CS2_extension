@@ -1,9 +1,10 @@
+#C2
 """
 CORRECT and GRID data
 
  - correct along-tracks SSH with OL & retrackers monthly climatology offset
  - subtract geoid (egm08, goco05c), apply  3m range
- - grid corrected data; bins must have > 30 points 
+ - grid corrected data; bins must have > 30 points
  - land mask is applied
 
 file: dot_cs2_bmean.nc, dot_cs2_bmedian.nc
@@ -30,28 +31,42 @@ import xarray as xr
 
 #-------------------------------------------------------------------------------
 # Define directories
-voldir = '/Volumes/SamT5/PhD_data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 ncdir = voldir + 'altimetry_cpom/1_raw_nc/'
 bindir = voldir + 'altimetry_cpom/2_grid_offset/'
 griddir = voldir + 'altimetry_cpom/3_grid_dot/'
-geoiddir = voldir + 'geoid/geoid_eigen6s4v2/'
+#geoiddir = voldir + 'geoid/geoid_eigen6s4v2/'
+#geoiddir = voldir + 'geoid/'
 lmdir = voldir + 'land_masks/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
-auxscriptdir = scriptdir + 'scripts/aux_func/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
+auxscriptdir = scriptdir + 'aux_func/'
 
-sys.path.append(auxdir)
-from aux_filenames import cs2_id_list as filenames
-import aux_func_trend as ft
+sys.path.append(auxscriptdir)
+from aux_1_filenames import cs2_id_list as filenames
+import aux_func as ft
 
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 # - - - - - - - - - - - - - - - - - - - - - - - -
+# n_thresh = 30
+# statistic = 'mean'
+
+# # # # # # # # # # # #
 n_thresh = 30
-statistic = 'mean'
-geoidtype = '_eigen6s4v2' #'_goco05c' #'_egm08'
+statistic = 'median'
+geoidtype = '_goco05c' #'_egm2008' #'_goco05c' #'_eigen6s4v2_neg'
+
+if geoidtype == '_goco05c':
+    geoiddir = voldir + 'geoid/geoid_goco05c/'
+elif geoidtype == '_egm2008':
+    geoiddir = voldir + 'geoid/geoid_egm2008/'
+elif geoidtype == '_eigen6s4v2_neg':
+    geoiddir = voldir + 'geoid/geoid_eigen6s4v2_neg/'
+# # # # # # # # # # # #
+
 sig = 3
 # - - - - - - - - - - - - - - - - - - - - - - - -
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 print("- - - - - - - - - - - - - - ")
 print("> > bin statistic: %s" % statistic)
 print("> > bin threshold: %s" % str(n_thresh))
@@ -60,7 +75,7 @@ print("> > filter sigma: %s" % sig)
 print("- - - - - - - - - - - - - - \n")
 #------------------------------------------------------------------
 # start from 2010-11-01
-time = pd.date_range('2010-11-01', '2018-10-01', freq='1MS')
+time = pd.date_range('2010-11-01', '2024-12-01', freq='1MS')
 itt = len(filenames)
 
 # Check all files have been created
@@ -74,7 +89,7 @@ print("%s files in total, %s not found \n" % (itt, notfound))
 print("first file %s" %filenames[0])
 print('start time', time[0])
 #------------------------------------------------------------------
-# SEASONAL OFFSET 
+# SEASONAL OFFSET
 #------------------------------------------------------------------
 offsetfile = 'b02_OL_offset_cs2_'+ str(n_thresh) + statistic + '.nc'
 with xr.open_dataset(bindir + offsetfile) as ol:
@@ -123,10 +138,22 @@ pts_in_bins = ma.zeros((lo, la, itt))
 #-------------------------------------------------------------------------------
 for i in range(itt):
     fname = filenames[i]
-    print('Analysing M/Y: %s' % fname)
-    
+    print(f'Analysing M/Y: {fname}')
+
     filepath = ncdir + fname + '.nc'
-    data = xr.open_dataset(filepath)
+
+    try:
+        data = xr.open_dataset(filepath)
+
+        # Check that required variables are present and dataset is not empty
+        required_vars = ['Latitude', 'Longitude', 'Elevation', 'SurfaceType', 'distance_m', 'MeanSSH', 'Time']
+        if not all(var in data.variables for var in required_vars) or data.sizes == {}:
+            print(f"MERGE {fname} is empty or missing required variables")
+            continue
+
+    except FileNotFoundError:
+        print(f"MERGE {fname} not available")
+        continue
 
     ssh = data.Elevation.values
     surf = data.SurfaceType.values
@@ -137,12 +164,12 @@ for i in range(itt):
 
     #------------------------------------------------------------------
     # 2 bring leads to the same level as the open ocean data
-    #------------------------------------------------------------------  
+    #------------------------------------------------------------------
     month = time.month.values[i]
     ssh[surf==2] += ol_dif[month-1]
 
     # LRM, SAR, SARIN correction - ref to LRM
-    #------------------------------------------------------------------    
+    #------------------------------------------------------------------
     ssh[retracker==2] += sar_dif[month-1]
     ssh[retracker==3] += (sarin_dif[month-1] + sar_dif[month-1])
 
@@ -151,11 +178,21 @@ for i in range(itt):
     #------------------------------------------------------------------
     # subtract geoid; load only column with geoid height data
     gd_file = geoiddir + fname + geoidtype +'.txt'
-    geoid_height = np.loadtxt(gd_file, usecols=2)
-    #geoid_height = ma.masked_invalid(geoid_height)
+    # geoid_height = np.loadtxt(gd_file, usecols=2)
+    # #geoid_height = ma.masked_invalid(geoid_height)
+
+    try:
+        geoid_height = np.loadtxt(gd_file, usecols=2)
+    except Exception as e:
+        print(f"Failed to read geoid for {fname}: {e}")
+        continue
+
+    if ssh.shape[0] != geoid_height.shape[0]:
+        print(f"Skipping {fname} due to mismatch in SSH ({ssh.shape[0]}) and geoid ({geoid_height.shape[0]}) lengths.")
+        continue
 
     dot = ssh-geoid_height
-    
+
     # corr 1 : |DOT| < 3 m
     dot_range = np.logical_and(dot<3, dot>-3)
 
@@ -165,29 +202,29 @@ for i in range(itt):
     dist = dist[dot_range]
     #------------------------------------------------------------------
     # 1 keep only data further than 10km from nearest coastline
-    #------------------------------------------------------------------  
+    #------------------------------------------------------------------
     dot = dot[dist>1e4]
     lon = lon[dist>1e4]
     lat = lat[dist>1e4]
 
     #------------------------------------------------------------------
     # 3. BIN DATA
-    #------------------------------------------------------------------    
+    #------------------------------------------------------------------
     print("binning DOT data ..")
     dot_bin = bin2d(lon, lat, dot, statistic=statistic,
             bins=[edges_lon, edges_lat]).statistic
     # number of points in bins
-    npts = np.histogram2d(lon, lat, bins=(edges_lon, edges_lat))[0]    
-    
+    npts = np.histogram2d(lon, lat, bins=(edges_lon, edges_lat))[0]
+
     # mask bins that have less than a threshold number of points
     dot_bin[npts<n_thresh] = np.nan
 
     #------------------------------------------------------------------
     # 4. gridded land mask
-    #------------------------------------------------------------------   
+    #------------------------------------------------------------------
     dot_bin[lmask==1] = np.nan
     npts[lmask==1] = 0
-  
+
     pts_in_bins[:, :, i] = npts
     #--------------------------------------------------------------------------
     # INTERPOLATION
@@ -212,7 +249,7 @@ all_SLA = all_DOT - mean_DOT[:, :, np.newaxis]
 newfile = 'dot_cs2_30b'+statistic + geoidtype +'_sig3.nc'
 print("saving file %s" % newfile)
 #--------------------------------------------------------------------------
-ds = xr.Dataset({'dot' : (('longitude', 'latitude', 'time'), all_DOT.filled(np.nan)), 
+ds = xr.Dataset({'dot' : (('longitude', 'latitude', 'time'), all_DOT.filled(np.nan)),
                  'sla' : (('longitude', 'latitude', 'time'), all_SLA.filled(np.nan)),
                  'mdt' : (('longitude', 'latitude'), mean_DOT.filled(np.nan)),
                  'num_pts' : (('longitude', 'latitude', 'time'), pts_in_bins),
@@ -231,7 +268,7 @@ ds.mdt.attrs['units']='metres'
 ds.dot.attrs['long_name']='dynamic_ocean_topography'
 ds.sla.attrs['long_name']='sea_level_anomaly'
 ds.mdt.attrs['long_name']='mean_dynamic_ocean_topography'
-ds.land_mask.attrs['long_name']='ocean_0_land_1' 
+ds.land_mask.attrs['long_name']='ocean_0_land_1'
 
 ds.attrs['description'] = ("CryoSat-2: \
 |*Lat, Lon at bin centre and edges \

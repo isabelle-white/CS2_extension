@@ -181,4 +181,5 @@ ax.grid(True, which='minor', lw=1., ls=':')
 ax.set_ylabel("O/L offset CryoSat-2 (cm)")
 ax.legend()
 plt.tight_layout()
+plt.show()
 

@@ -45,7 +45,7 @@ import gsw
 import sys
 
 # Define directories
-voldir = '/Volumes/SamT5/PhD_data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 griddir = voldir + 'altimetry_cpom/3_grid_dot/'
 
 #----------------------------------------------------------

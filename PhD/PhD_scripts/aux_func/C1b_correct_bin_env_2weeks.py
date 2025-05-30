@@ -1,3 +1,4 @@
+#c1 2 weeks
 #c1
 """
 CORRECT and GRID ENVISAT data
@@ -26,6 +27,7 @@ import pickle
 
 import pandas as pd
 import xarray as xr
+from datetime import timedelta
 
 #-------------------------------------------------------------------------------
 # Define directories
@@ -42,6 +44,13 @@ auxscriptdir = scriptdir + 'aux_func/'
 sys.path.append(auxscriptdir)
 from aux_1_filenames import env_id_list as filenames
 
+# Slice filenames for desired subset
+start_index = 100
+end_index = 117  # exclusive in Python, so this gets index 100 to 116
+filenames = filenames[start_index:end_index]
+itt = len(filenames)
+
+
 print(filenames)
 #import aux_func_trend as ft
 import aux_func as ft
@@ -49,7 +58,7 @@ import aux_func as ft
 # # # # # # # # # # # #
 n_thresh = 30
 statistic = 'median'
-geoidtype = '_eigen6s4v2_neg' #'_egm2008' #'_goco05c' #'_eigen6s4v2_neg'
+geoidtype = '_goco05c' #'_egm2008' #'_goco05c' #'_eigen6s4v2_neg'
 
 if geoidtype == '_goco05c':
     geoiddir = voldir + 'geoid/geoid_goco05c/'
@@ -65,12 +74,15 @@ print("> > bin threshold: %s points" % str(n_thresh))
 print("> > geoid: %s" % geoidtype)
 print("- - - - - - - - - - - - - - \n")
 #------------------------------------------------------------------
-time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
+#time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
 #2 weeks time
-time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
-
+#time_start = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
+time_start = pd.date_range('2010-11-01', '2012-03-01', freq='1MS')
+time_mid = time_start + timedelta(days=14)
+time = time_start.append(time_mid).sort_values()
 
 itt = len(filenames)
+assert len(filenames) == itt, f"Expected {itt} filenames, but got {len(filenames)}"
 
 # Check all files have been created
 notfound = 0
@@ -201,24 +213,68 @@ for i in range(itt):
 
 mean_DOT = ma.mean(all_DOT, axis=-1)
 all_SLA = all_DOT - mean_DOT[:, :, np.newaxis]
+#-------------------------------------------------------------------------
+#2 weekly nc file
+from scipy.interpolate import interp1d
+
+print("Interpolating to 2-weekly time grid...")
+newfile = '2week_dot_env_30b' + statistic + geoidtype + '_sig3.nc'
+
+# Define original and new time axes
+time_orig = pd.date_range('2010-11-01', '2012-03-01', freq='1MS')[:itt]  # Monthly, 117 steps
+time_new = time_orig.append(time_orig + timedelta(days=14)).sort_values()  # 2-weekly, 234 steps
+
+# Interpolation function
+def interp_var(var, time_dim=-1):
+    shape = list(var.shape)
+    shape[time_dim] = len(time_new)
+    interp_func = interp1d(
+        pd.to_datetime(time_orig).astype(np.int64),
+        var,
+        axis=time_dim,
+        bounds_error=False,
+        kind='linear',
+        fill_value='extrapolate'
+    )
+    out = interp_func(pd.to_datetime(time_new).astype(np.int64))
+    return ma.masked_invalid(out)
+
+# Apply interpolation
+all_DOT_interp = interp_var(all_DOT)
+all_SLA_interp = interp_var(all_SLA)
+pts_in_bins_interp = interp_var(pts_in_bins)
+
+ds = xr.Dataset({
+    'dot': (('longitude', 'latitude', 'time'), all_DOT_interp.filled(np.nan)),
+    'sla': (('longitude', 'latitude', 'time'), all_SLA_interp.filled(np.nan)),
+    'mdt': (('longitude','latitude'), mean_DOT.filled(np.nan)),
+    'num_pts': (('longitude', 'latitude', 'time'), pts_in_bins_interp),
+    'land_mask': (('longitude', 'latitude'), lmask)},
+    coords={
+        'longitude': mid_lon,
+        'latitude': mid_lat,
+        'time': time_new,
+        'edge_lat': edges_lat,
+        'edge_lon': edges_lon
+    })
 
 
-#--------------------------------------------------------------------------
-# .nc file
-#newfile = '2week_dot_env_30b' + statistic + geoidtype + '_sig3.nc' - not as simple as just this ....
-newfile = 'dot_env_30b' + statistic + geoidtype + '_sig3.nc'
-print("Saving file %s" % newfile)
-#--------------------------------------------------------------------------
-ds = xr.Dataset({'dot' : (('longitude', 'latitude', 'time'), all_DOT.filled(np.nan)),
-                 'sla' : (('longitude', 'latitude', 'time'), all_SLA.filled(np.nan)),
-                 'mdt' : (('longitude','latitude'), mean_DOT.filled(np.nan)),
-                 'num_pts' : (('longitude', 'latitude', 'time'), pts_in_bins),
-                 'land_mask' : (('longitude', 'latitude'), lmask)},
-                coords={'longitude' : mid_lon,
-                        'latitude' : mid_lat,
-                        'time' : time,
-                        'edge_lat' : edges_lat,
-                        'edge_lon' : edges_lon})
+
+# #--------------------------------------------------------------------------
+# # .nc file
+# newfile = 'dot_env_30b' + statistic + geoidtype + '_sig3.nc'
+# print("Saving file %s" % newfile)
+# #--------------------------------------------------------------------------
+# ds = xr.Dataset({'dot' : (('longitude', 'latitude', 'time'), all_DOT.filled(np.nan)),
+#                  'sla' : (('longitude', 'latitude', 'time'), all_SLA.filled(np.nan)),
+#                  'mdt' : (('longitude','latitude'), mean_DOT.filled(np.nan)),
+#                  'num_pts' : (('longitude', 'latitude', 'time'), pts_in_bins),
+#                  'land_mask' : (('longitude', 'latitude'), lmask)},
+#                 coords={'longitude' : mid_lon,
+#                         'latitude' : mid_lat,
+#                         'time' : time,
+#                         'edge_lat' : edges_lat,
+#                         'edge_lon' : edges_lon})
 
 ds.attrs['history'] = "Created " + today.strftime("%d/%m/%Y, %H:%M%S" )
 
@@ -235,7 +291,7 @@ ds.attrs['description'] = ("ENVISAT: \
 |*DOT (bin median, only values in (-3, 3)m)\
 |*SLA (ref to mean over all period)\
 |*MDT\
-|*time (2002-07-01, 2012-03-01)\
+|*time (2010-11-01, 2012-03-01)\
 |*number of points in bins\
 |only bins with > 30 points are used\
 |*land mask (land=1, ocean=0).\

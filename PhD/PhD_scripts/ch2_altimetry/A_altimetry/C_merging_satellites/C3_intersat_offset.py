@@ -24,16 +24,21 @@ import sys
 
 #----------------------------------------------------------
 # Define directories
-voldir = '/Volumes/SamT5/PhD/data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 griddir = voldir + 'altimetry_cpom/3_grid_dot/'
 lmdir = voldir + 'land_masks/'
 figdir = voldir + '../PhD_figures/Figures_v8/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
-auxscriptdir = scriptdir + 'scripts/aux_func/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
+auxscriptdir = scriptdir + '/aux_func/'
 
 sys.path.append(auxscriptdir)
-import aux_func_trend as fc
+from aux_1_filenames import cs2_id_list as filenames
+import aux_func as ft
+
+
+sys.path.append(auxscriptdir)
+import aux_func as fc
 import aux_stereoplot as st
 
 #----------------------------------------------------------
@@ -53,7 +58,7 @@ import aux_stereoplot as st
 #----------------------------------------------------------
 
 # # # # # # # # # # # # 
-geoidtype = '_goco05c'#'_eigen6s4v2' #'_egm08' #'_goco05c'
+geoidtype = '_goco05c'#'_eigen6s4v2_neg' #'_egm2008' #'_goco05c'
 statistics = 'median'
 # # # # # # # # # # # # 
 

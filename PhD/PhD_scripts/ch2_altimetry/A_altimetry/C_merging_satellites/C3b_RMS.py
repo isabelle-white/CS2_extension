@@ -37,21 +37,21 @@ import sys
 #intersat_off = 0.037683 #(6_, median)
 
 # Define directories
-voldir = '/Volumes/SamT5/PhD/data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 griddir = voldir + 'altimetry_cpom/3_grid_dot/'
 figdir = voldir + '../PhD_figures/Figures_v8/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
-auxscriptdir = scriptdir + 'scripts/aux_func/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
+auxscriptdir = scriptdir + 'aux_func/'
 
 
 sys.path.append(auxscriptdir)
-import aux_func_trend as fc
+import aux_func as fc
 import aux_stereoplot as st
 
 #----------------------------------------------------------
 # # # # # # # # # # # # 
-geoidtype = '_eigen6s4v2' #'_goco05c' #'_egm08' #'_goco05c'
+geoidtype = '_goco05c' #'_goco05c' #'_egm08' #'_goco05c' #'_eigen6s4v2'
 statistics = 'median'
 intersat_off = 0.0384
 # # # # # # # # # # # # 

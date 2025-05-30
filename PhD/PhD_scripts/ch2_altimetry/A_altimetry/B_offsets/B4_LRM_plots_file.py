@@ -18,15 +18,17 @@ import sys
 #-------------------------------------------------------------------
 # Define directories
 #-------------------------------------------------------------------
-voldir = '/Volumes/SamT5/PhD_data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 ncdir = voldir + 'altimetry_cpom/1_raw_nc/'
 bindir = voldir + 'altimetry_cpom/2_grid_offset/'
+lmdir = voldir + 'land_masks/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
-auxscriptdir = scriptdir + 'scripts/aux_func/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
+auxscriptdir = scriptdir + 'aux_func/'
 
 sys.path.append(auxscriptdir)
-import aux_func_trend as ft
+# import aux_func_trend as ft
+import aux_func as ft
 
 #-------------------------------------------------------
 # bin edges
@@ -138,4 +140,4 @@ ax.set_ylabel("LRM/SAR offset CS2 (cm)")
 ax.axhline(0, ls=':', c='k')
 ax.legend()
 plt.tight_layout()
-
+plt.show()

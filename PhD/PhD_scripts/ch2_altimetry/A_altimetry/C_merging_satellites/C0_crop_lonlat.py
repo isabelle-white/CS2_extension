@@ -1,3 +1,4 @@
+#c0
 """
 Crop lon and lat from along-track altimetry and save coordinates in text files.
 Then use GMT to interpolate the geoid at the along-track lon/lat.
@@ -11,16 +12,17 @@ import xarray as xr
 import sys
 
 # Directories
-workdir = '/Volumes/SamT5/PhD_data/'
+workdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 
 altdir = workdir + 'altimetry_cpom/1_raw_nc/'
 latlondir = workdir + 'altimetry_cpom/1_raw_nc_lonlat/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
 auxscriptdir = scriptdir + 'scripts/aux_func/'
 
 sys.path.append(auxscriptdir)
 from aux_1_filenames import cs2_id_list, env_id_list
+
 
 # Which satellite to process?
 satellite = input("Which satellite? (env or cs2) ")
@@ -34,16 +36,49 @@ else:
 itt = len(id_list)
 print("Number of files: %s" % itt)
 
+# for ii, suffix in zip(range(itt), id_list):
+#     print("Extracting lat/lon from " + suffix + '.nc')
+#     print('filenumber ', ii)
+#     alt = xr.open_dataset(altdir+suffix+'.nc')
+#     alt_lon = alt.Longitude.values
+#     alt_lat = alt.Latitude.values
+#
+#     # save coordinates in a text file
+#     data = np.vstack((alt_lon, alt_lat)).T
+#
+#     latlonfile = latlondir + suffix + '_lonlat.txt'
+#     with open(latlonfile, 'w+') as output:
+#         np.savetxt(output, data, fmt=['%.2f', '%.2f'])
+
 for ii, suffix in zip(range(itt), id_list):
     print("Extracting lat/lon from " + suffix + '.nc')
-    alt = xr.open_dataset(altdir+suffix+'.nc')
-    alt_lon = alt.Longitude.values
-    alt_lat = alt.Latitude.values
+    print('filenumber ', ii)
 
-    # save coordinates in a text file
+    filepath = altdir + suffix + '.nc'
+
+    try:
+        ds = xr.open_dataset(filepath)
+
+        required_vars = ['Latitude', 'Longitude']
+        if not all(var in ds.variables for var in required_vars) or ds.sizes == {}:
+            print(f"{suffix}.nc is empty or missing required variables.")
+            continue
+
+        alt_lon = ds.Longitude.values
+        alt_lat = ds.Latitude.values
+
+    except FileNotFoundError:
+        print(f"{suffix}.nc not found.")
+        continue
+
+    except Exception as e:
+        print(f"Error reading {suffix}.nc: {e}")
+        continue
+
+    # Save coordinates in a text file
     data = np.vstack((alt_lon, alt_lat)).T
-
     latlonfile = latlondir + suffix + '_lonlat.txt'
+
     with open(latlonfile, 'w+') as output:
         np.savetxt(output, data, fmt=['%.2f', '%.2f'])
 
@@ -72,4 +107,4 @@ sys.exit()
 # gd_height_interp = interpolate.griddata((gd_lat, gd_lon_grid.flatten()),
 #                                         gd_height.flatten(),
 #                                         (alt_lat_grid.flatten(),
-#                                          alt_lon_grid.flatten())) 
+#                                          alt_lon_grid.flatten()))

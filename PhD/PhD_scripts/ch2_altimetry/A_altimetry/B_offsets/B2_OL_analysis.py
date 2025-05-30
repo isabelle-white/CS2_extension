@@ -1,12 +1,12 @@
-"""
-Compute O/L offset for envisat from binned data
-- area-weighted average of overlapping cells
-- monthly climatology of all months
-
-- uses the one file with all gridded data instead of individual files
-
-Last modified: 30 Mar 2021
-"""    
+# """
+# Compute O/L offset for envisat from binned data
+# - area-weighted average of overlapping cells
+# - monthly climatology of all months
+#
+# - uses the one file with all gridded data instead of individual files
+#
+# Last modified: 30 Mar 2021
+# """
 #------------------------------------------------------------------
 """
 # TEMPORAL VARIABILITY
@@ -30,7 +30,7 @@ Last modified: 30 Mar 2021
 import numpy as np
 from numpy import ma
 
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from matplotlib import cm
 
@@ -50,7 +50,7 @@ def skew_kurt_hist(var, month):
 	print('Skewnesss: ', kurt0)
 
 	fig, ax = plt.subplots()
-	ax.hist(var.flatten()*1e2, bins=17, 
+	ax.hist(var.flatten()*1e2, bins=17,
 	    label='n_thresh=%s'% str(n_thresh))
 	ax.annotate('skew = %.4f' % skew0,
 	    xy=(.15, .8),
@@ -77,7 +77,7 @@ auxscriptdir = scriptdir + 'aux_func/'
 sys.path.append(auxscriptdir)
 import aux_func as ft
 import aux_stereoplot as st
-#- - - - - - - - - - - - - - 
+#- - - - - - - - - - - - - -
 
 #-------------------------------------------------------
 # bin edges
@@ -88,11 +88,11 @@ eglat, eglon = np.meshgrid(edges_lat, edges_lon)
 total_area = ft.grid_area(eglon, eglat)
 #-------------------------------------------------------
 
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 statistic = 'mean'
 satellite = 'cs2'
 n_thresh = 30
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 
 print("- - - - - - - - - - - - - - ")
 print("> > bin statistic: %s" % statistic)
@@ -105,6 +105,9 @@ filename = 'b01_bin_ssha_OL_' + satellite + '_' + str(statistic) + '.nc'
 
 with xr.open_dataset(bindir + filename) as bin0:
     print(bin0.keys)
+
+
+#%%
 
 #------------------------------------------------------------------
 # OFFSET computation
@@ -127,7 +130,8 @@ arr_area = total_area[:,:, np.newaxis]*ones
 sum_area = arr_area.sum(axis=(0,1))
 norm_area = arr_area/sum_area
 
-offset['weights'] = (('longitude', 'latitude', 'time'), norm_area) 
+#offset['weights'] = (('longitude', 'latitude', 'time'), norm_area) - Oana original code
+offset['weights'] = (('longitude', 'latitude', 'time'), np.nan_to_num(norm_area))
 
 #------------------------------------------------------------------
 #- - - - - - - - - - - - - -
@@ -142,7 +146,7 @@ monthly_off_weighted = weighted_obj.mean(('longitude', 'latitude'))
 # a. climatology of monthly area-weighted mean offset
 monthly_off_clim = monthly_off_weighted.groupby('time.month').mean('time')
 
-#- - - - - - - - - - - - - - 
+#- - - - - - - - - - - - - -
 
 # standard deviation - weighted
 monthly_res_sq = (offset.ol_dif - monthly_off_weighted)**2
@@ -163,7 +167,7 @@ comb_std_clim = np.sqrt(comb_std_sum)
 
 #- - - - - - - - - - - - - -
 #- - - - - - - - - - - - - -
-# > > b. for every month, average offset in time in every bin 
+# > > b. for every month, average offset in time in every bin
 #- - - - - - - - - - - - - -
 #- - - - - - - - - - - - - -
 offset_month = offset.ol_dif.groupby('time.month').mean('time')
@@ -181,17 +185,18 @@ ones = np.ones(offset_month.ol_m.shape)
 ones[np.isnan(offset_month.ol_m.values)] = 0
 arr_area = total_area[:,:, np.newaxis]*ones
 
-offset_month['weights'] = (('longitude', 'latitude', 'month'), arr_area) 
+offset_month['weights'] = (('longitude', 'latitude', 'month'), arr_area)
 
 # climatology - weights for every calendar month avg (12)
 off_obj = offset_month.ol_m.weighted(offset_month.weights)
-off_mclim = off_obj.mean(('longitude', 'latitude')) 
+off_mclim = off_obj.mean(('longitude', 'latitude'))
 
 res = (offset_month.ol_m - off_mclim)**2
 res_obj = res.weighted(offset_month.weights)
 res_var = res_obj.mean(('longitude', 'latitude'))
 off_mclim_std = np.sqrt(res_var)
 
+#%%
 
 #------------------------------------------------------------------
 # stereographical PLOT for individual months
@@ -201,7 +206,7 @@ cbar_units = 'cm'
 cmap = cm.seismic
 
 k = 1
-fig, ax, m = st.spstere_plot(eglon, eglat, 
+fig, ax, m = st.spstere_plot(eglon, eglat,
 				offset.ol_dif.isel(time=k)*100,
 				cbar_range, cmap, cbar_units, None)
 
@@ -246,6 +251,7 @@ ax.grid(True, which='minor', lw=1., ls=':')
 ax.set_ylabel("O/L offset %s (cm)" % satellite)
 ax.axhline(0, ls=':', c='k')
 plt.tight_layout()
+#%%
 
 #------------------------------------------------------------------
 # stereographical PLOT - maps of monthly avg offset & StDev
@@ -255,10 +261,10 @@ cbar_units = 'Dec (cm)'
 cmap = cm.seismic
 
 k=1 	# 0-11 Jan-Dec
-fig, ax, m = st.spstere_plot(eglon, eglat, 
+fig, ax, m = st.spstere_plot(eglon, eglat,
                 offset_month.ol_m.isel(month=k)*100,
                 cbar_range, cmap, cbar_units, None)
-fig, ax, m = st.spstere_plot(eglon, eglat, 
+fig, ax, m = st.spstere_plot(eglon, eglat,
                 offset_month_std.isel(month=k)*100,
                 cbar_range, cm.cool, cbar_units + ' StDev', None)
 

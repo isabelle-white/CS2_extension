@@ -31,23 +31,23 @@ import pandas as pd
 
 import sys
 
+#-------------------------------------------------------------------
 # Define directories
 #-------------------------------------------------------------------------------
-voldir = '/Volumes/SamT5/PhD_data/'
+voldir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_data/'
 ncdir = voldir + 'altimetry_cpom/1_raw_nc/'
 bindir = voldir + 'altimetry_cpom/2_grid_offset/'
-
 lmdir = voldir + 'land_masks/'
 
-scriptdir = '/Volumes/SamT5/PhD_scripts/'
-auxscriptdir = scriptdir + 'scripts/aux_func/'
+scriptdir = '/Users/iw2g24/PycharmProjects/CS2_extension/PhD/PhD_scripts/'
+auxscriptdir = scriptdir + 'aux_func/'
 
-sys.path.append(scriptdir)
-from aux_filenames import cs2_id_list
+sys.path.append(auxscriptdir)
+from aux_1_filenames import cs2_id_list
 filenames = cs2_id_list
 #-------------------------------------------------------------------------------
 
-time = pd.date_range('2010-11-01', '2018-10-01', freq='1MS')
+time = pd.date_range('2010-11-01', '2024-12-01', freq='1MS')
 
 itt = len(time)
 yr = time.year.values
@@ -79,7 +79,7 @@ glat, glon = np.meshgrid(mid_lat, mid_lon)
 londim, latdim = glat.shape
 
 # # # # # # # # # # # # 
-statistic = 'median'
+statistic = 'mean'
 # # # # # # # # # # # # 
 
 print("- - - - - - - - - - - - - - ")
@@ -110,7 +110,19 @@ for j, filename in enumerate(filenames):
 
     filepath = ncdir + filename + '.nc'
 
-    ds = xr.open_dataset(filepath)
+    try:
+        ds = xr.open_dataset(filepath)
+
+        # Check that required variables are present and dataset is not empty
+        required_vars = ['Latitude', 'Longitude', 'Elevation', 'SurfaceType', 'distance_m', 'MeanSSH', 'Time']
+        if not all(var in ds.variables for var in required_vars) or ds.sizes == {}:
+            print(f"MERGE {filename} is empty or missing required variables")
+            continue
+
+    except FileNotFoundError:
+        print(f"MERGE {filename} not available")
+        continue
+
     lat = ds.Latitude.values
     lon = ds.Longitude.values
     ssh = ds.Elevation.values
