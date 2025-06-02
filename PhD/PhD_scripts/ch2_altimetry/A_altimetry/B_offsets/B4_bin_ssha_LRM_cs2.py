@@ -1,3 +1,4 @@
+#B4
 """
 Create files with gridded LRM/SAR(In) data from CS2 (after 2010.11)
 after correcting the along-track SLA leads.
@@ -7,7 +8,7 @@ after correcting the along-track SLA leads.
 
 OFFSET:
 - discard data less than 10km away from land
-- bin ocean/leads separately 
+- bin ocean/leads separately
 - apply gridded land mask (for the points that might be inside contours)
 - test difference between mean/median average in bins; how do I treat the monthly std?
 
@@ -78,9 +79,9 @@ glat, glon = np.meshgrid(mid_lat, mid_lon)
 
 londim, latdim = glat.shape
 
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 statistic = 'mean'
-# # # # # # # # # # # # 
+# # # # # # # # # # # #
 
 print("- - - - - - - - - - - - - - ")
 print("> > bin statistic: %s" % statistic)
@@ -135,13 +136,13 @@ for j, filename in enumerate(filenames):
     print("date start: %s" % ds.Time[0].dt.strftime('%m.%Y').values)
     print("date end: %s" % ds.Time[-1].dt.strftime('%m.%Y').values)
 
-    if (ds.Time[0].dt.year.values != yr[j] 
+    if (ds.Time[0].dt.year.values != yr[j]
         or ds.Time[0].dt.month.values != months[j]):
         print("Year or month do not agree with time coordinate!")
         sys.exit()
     #------------------------------------------------------------------
     # 1 keep only data further than 10km from nearest coastline
-    #------------------------------------------------------------------  
+    #------------------------------------------------------------------
     ssh = ssh[dist>1e4]
     lon = lon[dist>1e4]
     lat = lat[dist>1e4]
@@ -153,7 +154,7 @@ for j, filename in enumerate(filenames):
 
     #------------------------------------------------------------------
     # 2 add OL offset to along-track lead SLA
-    #------------------------------------------------------------------  
+    #------------------------------------------------------------------
     # add the monthly climatology correction to the along_track leads
     month = ds.Time.dt.month.values[j]
 
@@ -162,7 +163,7 @@ for j, filename in enumerate(filenames):
 
     #------------------------------------------------------------------
     # 3 split into retrackers
-    #------------------------------------------------------------------ 
+    #------------------------------------------------------------------
     ssha_lrm = ssha[retrack==1]
     lon_lrm = lon[retrack==1]
     lat_lrm = lat[retrack==1]
@@ -173,24 +174,24 @@ for j, filename in enumerate(filenames):
 
     #------------------------------------------------------------------
     # 4. BIN DATA
-    #------------------------------------------------------------------    
+    #------------------------------------------------------------------
     print("binning LRM data ..")
     x, y, var = lon_lrm, lat_lrm, ssha_lrm
     ssha_lrm_bin = bin2d(x, y, var, statistic=statistic,
                  bins=[edges_lon, edges_lat]).statistic
     # number of points in bins
-    npts_lrm = np.histogram2d(x, y, bins=(edges_lon, edges_lat))[0]    
+    npts_lrm = np.histogram2d(x, y, bins=(edges_lon, edges_lat))[0]
 
     print("binning SAR data ..")
     x, y, var = lon_sar, lat_sar, ssha_sar
     ssha_sar_bin = bin2d(x, y, var, statistic=statistic,
                  bins=[edges_lon, edges_lat]).statistic
     # number of points in bins
-    npts_sar = np.histogram2d(x, y, bins=(edges_lon, edges_lat))[0] 
+    npts_sar = np.histogram2d(x, y, bins=(edges_lon, edges_lat))[0]
 
     #------------------------------------------------------------------
     # 5. gridded land mask
-    #------------------------------------------------------------------   
+    #------------------------------------------------------------------
     ssha_lrm_bin[lmask==1] = ma.masked
     ssha_sar_bin[lmask==1] = ma.masked
     npts_sar[lmask==1] = 0
@@ -210,8 +211,15 @@ ds_all = xr.Dataset({'ssha_lrm' : (('time', 'longitude', 'latitude'), ssha_lrm_a
                     coords={'longitude' : mid_lon,
                             'latitude' : mid_lat,
                             'time' : time})
+newfile = 'b04_bin_ssha_LRM_cs2_' + statistic +'.nc'
+full_path = bindir + newfile
 
-ds_all.to_netcdf(bindir + 'b04_bin_ssha_LRM_cs2_' + statistic +'.nc')
+if os.path.exists(full_path):
+    print(f"File {full_path} already exists")
+else:
+    ds.to_netcdf(full_path)
+    print(f"File {full_path} created")
+
 
 t_stop = runtime.process_time()
 print("execution time: %.1f min " %((t_stop-t_start)/60))

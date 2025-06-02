@@ -49,7 +49,7 @@ import aux_func as ft
 # # # # # # # # # # # #
 n_thresh = 30
 statistic = 'median'
-geoidtype = '_eigen6s4v2_neg' #'_egm2008' #'_goco05c' #'_eigen6s4v2_neg'
+geoidtype = '_goco05c' #'_egm2008' #'_goco05c' #'_eigen6s4v2_neg'
 
 if geoidtype == '_goco05c':
     geoiddir = voldir + 'geoid/geoid_goco05c/'
@@ -67,8 +67,7 @@ print("- - - - - - - - - - - - - - \n")
 #------------------------------------------------------------------
 time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
 #2 weeks time
-time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
-
+#time = pd.date_range('2002-07-01', '2012-03-01', freq='1MS')
 
 itt = len(filenames)
 

@@ -8,7 +8,7 @@ Last modified: 30 Mar 2021
 import numpy as np
 from numpy import ma
 
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
 import xarray as xr
 import pandas as pd
@@ -36,7 +36,7 @@ eglat, eglon = np.meshgrid(edges_lat, edges_lon)
 
 total_area = ft.grid_area(eglon, eglat)
 #-------------------------------------------------------
- 
+
 def mclim(statistic, n_thresh):
     print("- - - - - - - - - - - - - - ")
     print("> > bin statistic: %s" % statistic)
@@ -71,11 +71,11 @@ def mclim(statistic, n_thresh):
     sum_area = arr_area.sum(axis=(0,1))
     norm_area = arr_area/sum_area
 
-    offset['weights'] = (('longitude', 'latitude', 'time'), norm_area) 
+    offset['weights'] = (('longitude', 'latitude', 'time'), norm_area)
 
-    #- - - - - - - - - - - - - - 
+    #- - - - - - - - - - - - - -
     print(offset.keys())
-    #- - - - - - - - - - - - - - 
+    #- - - - - - - - - - - - - -
 
     # > > a. area weighted mean and StDev for every month
     # results are the same as my implementation of the weighted avg
@@ -98,9 +98,14 @@ def mclim(statistic, n_thresh):
         'sar_std' : ('month', monthly_off_clim_std.values)},
         coords={'month' : np.arange(1,13)})
 
-    newfile = 'b03_SAR_offset_cs2_' + str(n_thresh) + statistic +'.nc'
-    ds.to_netcdf(bindir + newfile)
-    print("File %s saved in %s" % (newfile, bindir))
+    newfile = 'b03_SAR_offset_cs2_' + str(n_thresh) + statistic + '.nc'
+    full_path = bindir + newfile
+
+    if os.path.exists(full_path):
+        print(f"File {newfile} already exists. Skipping save.")
+    else:
+        ds.to_netcdf(full_path)
+        print("File %s saved in %s" % (newfile, bindir))
 
     return ds
 

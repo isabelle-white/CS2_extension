@@ -149,7 +149,7 @@ cmap = cm.seismic
 
 # # # # # # # # # # # # 
 fig, ax, m = st.spstere_plot(eglon, eglat, sla_dif_mean*1e2,
-                cbar_range, cmap, cbar_units, 'both')
+                cbar_range, cmap, cbar_units, 'w')
 fig.tight_layout(rect=[0, -.1, 1, .95])
 fig.suptitle(('{}').format('Mean of monthly SLA residual ENV-CS2 [%s] \n\
                            (ref. to ENV during 11.10-03.12)' % statistics))
@@ -162,7 +162,7 @@ ax.annotate('offset: %.2f cm' % (avg_off1*1e2),
 # # # # # # # # # # # # 
 
 fig, ax, m = st.spstere_plot(eglon, eglat, sla_dif_median*1e2,
-                cbar_range, cmap, cbar_units, 'both')
+                cbar_range, cmap, cbar_units, 'w')
 fig.tight_layout(rect=[0, -.1, 1, .95])
 fig.suptitle(('{}').format('Median of monthly SLA residual ENV-CS2 [%s] \n\
                            (ref. to ENV during 11.10-03.12)' % statistics))
@@ -171,7 +171,7 @@ ax.annotate('offset: %.2f cm' % (avg_off2*1e2),
     xycoords='figure fraction',
     weight='bold', fontsize=14)
 
-sys.exit()
+#sys.exit()
 # stop here
 
 
@@ -252,7 +252,7 @@ env_sla_v = env_sla.values
 env_sla_v[sla_dif_median<0] = np.nan
 cs2_sla_v[sla_dif_median<0] = np.nan
 
-# - - - - - - - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - -
 # area-weighted avg and residual
 avg_sla_cs2, avg_sla_env = [ma.ones((itt, )) for _ in range(2)]
 for i in range(itt):
@@ -301,13 +301,23 @@ plt.tight_layout()
 
 #----------------------------------------------------------
 
-# save a mask with 1s where the offset > 0 and 0 everywhere else
-dif_mask = ma.ones((msla_dif.shape))
-dif_mask[msla_dif.mask==True] = ma.masked
-dif_mask[msla_dif<0]=0
+# save a mask with 1s where the offset > 0 and 0 everywhere else - commented this as msla not a vairbale
+# dif_mask = ma.ones((msla_dif.shape))
+# dif_mask[msla_dif.mask==True] = ma.masked
+# dif_mask[msla_dif<0]=0
+# lo, la = dif_mask.shape
+# elo, ela = len(elon), len(elat)
+
+sla_dif_ma = ma.masked_invalid(sla_dif.values)
+dif_mask = ma.ones((sla_dif.shape))
+dif_mask[sla_dif_ma.mask==True] = ma.masked
+dif_mask[sla_dif_ma<0]=0
 
 lo, la = dif_mask.shape
 elo, ela = len(elon), len(elat)
+
+plt.show()
+
 
 
 
